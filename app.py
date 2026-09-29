@@ -1,137 +1,223 @@
-
 import re
 import nltk
-import streamlit as st
+import gradio as gr
 
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Download NLTK data
+
+# NLTK SETUP
+
 nltk.download("stopwords", quiet=True)
 
-# Stop words
 stop_words = set(stopwords.words("english"))
 
-# -----------------------------
+
 # FAQ DATASET
-# -----------------------------
 
 faqs = [
     {
         "question": "What is artificial intelligence?",
-        "answer": "Artificial Intelligence (AI) is a field of computer science that enables machines to perform tasks that normally require human intelligence, such as understanding language, recognizing patterns, and making decisions."
+        "answer": (
+            "Artificial Intelligence (AI) is a field of computer science that "
+            "enables machines to perform tasks that normally require human "
+            "intelligence, such as understanding language, recognizing patterns, "
+            "and making decisions."
+        )
     },
     {
         "question": "What is AI automation?",
-        "answer": "AI automation combines artificial intelligence with automated workflows to perform tasks with minimal human intervention."
+        "answer": (
+            "AI automation combines artificial intelligence with automated "
+            "workflows to perform tasks with minimal human intervention."
+        )
     },
     {
         "question": "What is machine learning?",
-        "answer": "Machine learning is a branch of AI where computers learn patterns from data and use those patterns to make predictions or decisions."
+        "answer": (
+            "Machine learning is a branch of AI where computers learn patterns "
+            "from data and use those patterns to make predictions or decisions."
+        )
     },
     {
         "question": "What is deep learning?",
-        "answer": "Deep learning is a type of machine learning that uses neural networks with multiple layers to learn complex patterns from large amounts of data."
+        "answer": (
+            "Deep learning is a type of machine learning that uses neural networks "
+            "with multiple layers to learn complex patterns from large amounts of data."
+        )
     },
     {
         "question": "What is NLP?",
-        "answer": "Natural Language Processing (NLP) is a field of AI that enables computers to process, analyze, and understand human language."
+        "answer": (
+            "Natural Language Processing (NLP) is a field of AI that enables "
+            "computers to process, analyze, and understand human language."
+        )
     },
     {
         "question": "What is a chatbot?",
-        "answer": "A chatbot is a software application that communicates with users through natural language and can provide information or perform tasks."
+        "answer": (
+            "A chatbot is a software application that communicates with users "
+            "through natural language and can provide information or perform tasks."
+        )
     },
     {
         "question": "What is an AI agent?",
-        "answer": "An AI agent is a system that can understand information, make decisions, use tools, and perform actions to accomplish a goal."
+        "answer": (
+            "An AI agent is a system that can understand information, make "
+            "decisions, use tools, and perform actions to accomplish a goal."
+        )
     },
     {
         "question": "What is n8n?",
-        "answer": "n8n is a workflow automation platform that allows you to connect applications, APIs, databases, and AI services to automate business processes."
+        "answer": (
+            "n8n is a workflow automation platform that allows you to connect "
+            "applications, APIs, databases, and AI services to automate business processes."
+        )
     },
     {
         "question": "What is workflow automation?",
-        "answer": "Workflow automation uses software to automatically perform a sequence of tasks instead of requiring a person to complete every step manually."
+        "answer": (
+            "Workflow automation uses software to automatically perform a sequence "
+            "of tasks instead of requiring a person to complete every step manually."
+        )
     },
     {
         "question": "What is an API?",
-        "answer": "An API, or Application Programming Interface, allows different software applications to communicate and exchange data."
+        "answer": (
+            "An API, or Application Programming Interface, allows different "
+            "software applications to communicate and exchange data."
+        )
     },
     {
         "question": "What is an AI API?",
-        "answer": "An AI API allows a software application to send data to an AI service and receive results such as text generation, classification, translation, or analysis."
+        "answer": (
+            "An AI API allows a software application to send data to an AI service "
+            "and receive results such as text generation, classification, translation, "
+            "or analysis."
+        )
     },
     {
         "question": "What is TF-IDF?",
-        "answer": "TF-IDF stands for Term Frequency-Inverse Document Frequency. It is a technique that converts text into numerical values based on how important words are within a document and across a collection of documents."
+        "answer": (
+            "TF-IDF stands for Term Frequency-Inverse Document Frequency. "
+            "It is a technique that converts text into numerical values based on "
+            "how important words are within a document and across a collection of documents."
+        )
     },
     {
         "question": "What is cosine similarity?",
-        "answer": "Cosine similarity measures how similar two numerical vectors are by comparing the angle between them. In this chatbot, it is used to compare the user's question with FAQ questions."
+        "answer": (
+            "Cosine similarity measures how similar two numerical vectors are by "
+            "comparing the angle between them. In this chatbot, it is used to compare "
+            "the user's question with FAQ questions."
+        )
     },
     {
         "question": "How does this FAQ chatbot work?",
-        "answer": "The chatbot cleans the user's question, converts it into a TF-IDF vector, compares it with all FAQ vectors using cosine similarity, and returns the answer associated with the most similar question."
+        "answer": (
+            "The chatbot cleans the user's question, converts it into a TF-IDF vector, "
+            "compares it with all FAQ vectors using cosine similarity, and returns the "
+            "answer associated with the most similar question."
+        )
     },
     {
         "question": "What is text preprocessing?",
-        "answer": "Text preprocessing prepares raw text for analysis by performing operations such as converting text to lowercase, removing punctuation, splitting text into words, and removing unnecessary stop words."
+        "answer": (
+            "Text preprocessing prepares raw text for analysis by performing operations "
+            "such as converting text to lowercase, removing punctuation, splitting text "
+            "into words, and removing unnecessary stop words."
+        )
     },
     {
         "question": "What are stop words?",
-        "answer": "Stop words are common words such as 'the', 'is', 'a', and 'and' that often provide little useful information for text-matching tasks."
+        "answer": (
+            "Stop words are common words such as 'the', 'is', 'a', and 'and' that often "
+            "provide little useful information for text-matching tasks."
+        )
     },
     {
         "question": "What is computer vision?",
-        "answer": "Computer vision is a field of AI that enables computers to analyze and understand images and video."
+        "answer": (
+            "Computer vision is a field of AI that enables computers to analyze and "
+            "understand images and video."
+        )
     },
     {
         "question": "What is object detection?",
-        "answer": "Object detection is a computer vision technique that identifies objects in an image or video and determines their locations."
+        "answer": (
+            "Object detection is a computer vision technique that identifies objects "
+            "in an image or video and determines their locations."
+        )
     },
     {
         "question": "What is generative AI?",
-        "answer": "Generative AI refers to AI systems that can create new content such as text, images, audio, video, or code based on learned patterns."
+        "answer": (
+            "Generative AI refers to AI systems that can create new content such as "
+            "text, images, audio, video, or code based on learned patterns."
+        )
     },
     {
         "question": "What is a neural network?",
-        "answer": "A neural network is a machine learning model inspired by the structure of the brain. It consists of connected nodes organized into layers that process information."
+        "answer": (
+            "A neural network is a machine learning model inspired by the structure "
+            "of the brain. It consists of connected nodes organized into layers that process information."
+        )
     },
     {
         "question": "What is data preprocessing?",
-        "answer": "Data preprocessing is the process of cleaning and transforming raw data into a format suitable for analysis or machine learning."
+        "answer": (
+            "Data preprocessing is the process of cleaning and transforming raw data "
+            "into a format suitable for analysis or machine learning."
+        )
     },
     {
         "question": "Why is Python used in AI?",
-        "answer": "Python is widely used in AI because it has a simple syntax and a large ecosystem of libraries for machine learning, data analysis, NLP, computer vision, and deep learning."
+        "answer": (
+            "Python is widely used in AI because it has a simple syntax and a large "
+            "ecosystem of libraries for machine learning, data analysis, NLP, computer "
+            "vision, and deep learning."
+        )
     },
     {
         "question": "What is scikit-learn?",
-        "answer": "scikit-learn is a Python machine learning library that provides tools for preprocessing, classification, regression, clustering, feature extraction, and model evaluation."
+        "answer": (
+            "Scikit-learn is a Python machine learning library that provides tools for "
+            "preprocessing, classification, regression, clustering, feature extraction, "
+            "and model evaluation."
+        )
     },
     {
         "question": "What is NLTK?",
-        "answer": "NLTK, or Natural Language Toolkit, is a Python library that provides tools for working with human language and performing NLP tasks."
+        "answer": (
+            "NLTK, or Natural Language Toolkit, is a Python library that provides tools "
+            "for working with human language and performing NLP tasks."
+        )
     },
     {
         "question": "What is Gradio?",
-        "answer": "Gradio is a Python library that makes it easy to build interactive web interfaces for machine learning and AI applications."
+        "answer": (
+            "Gradio is a Python library that makes it easy to build interactive web "
+            "interfaces for machine learning and AI applications."
+        )
     }
 ]
 
-print("Total FAQs:", len(faqs))
 
-# -----------------------------
-# PREPROCESSING
-# -----------------------------
+# TEXT PREPROCESSING
 
 def preprocess(text):
+    """Clean and prepare text for similarity matching."""
+
     text = text.lower()
+
+    # Remove punctuation, numbers, and special characters
     text = re.sub(r"[^a-zA-Z\s]", "", text)
 
+    # Split into words
     words = text.split()
 
+    # Remove stop words
     words = [
         word for word in words
         if word not in stop_words
@@ -140,9 +226,7 @@ def preprocess(text):
     return " ".join(words)
 
 
-# -----------------------------
-# TF-IDF
-# -----------------------------
+# TF-IDF VECTOR REPRESENTATION
 
 faq_questions = [
     preprocess(faq["question"])
@@ -154,51 +238,56 @@ vectorizer = TfidfVectorizer()
 faq_vectors = vectorizer.fit_transform(faq_questions)
 
 
-# -----------------------------
 # FIND BEST ANSWER
-# -----------------------------
 
 def find_best_answer(user_question):
+    """Find the FAQ with the highest cosine similarity."""
 
-    # Remove unnecessary spaces
     user_question = user_question.strip()
 
-    # Empty question
     if not user_question:
         return "Please enter a question.", 0.0
 
-    # Handle simple greetings
-    greetings = [
+    # Simple greeting handling
+    greetings = {
         "hi",
         "hello",
         "hey",
         "good morning",
         "good afternoon",
         "good evening"
-    ]
+    }
 
     if user_question.lower() in greetings:
         return (
             "Hello! 👋 I'm your AI & Automation FAQ chatbot. "
-            "Ask me something about AI, NLP, n8n, APIs, machine learning, or chatbots.",
+            "Ask me about AI, machine learning, NLP, n8n, APIs, "
+            "automation, or chatbots.",
             1.0
         )
 
-    # Preprocess user's question
+    # Preprocess question
     processed_question = preprocess(user_question)
 
-    # Convert question into TF-IDF vector
+    # Handle cases where preprocessing removes everything
+    if not processed_question:
+        return (
+            "Please ask a meaningful question related to AI or automation.",
+            0.0
+        )
+
+    # Convert user question into TF-IDF vector
     user_vector = vectorizer.transform([processed_question])
 
-    # Calculate similarity with every FAQ
+    # Calculate cosine similarity
     similarities = cosine_similarity(
         user_vector,
         faq_vectors
     )
 
-    # Find highest similarity
+    # Find best match
     best_index = similarities.argmax()
-    best_score = similarities[0][best_index]
+    best_score = float(similarities[0][best_index])
 
     # Confidence threshold
     if best_score < 0.20:
@@ -208,105 +297,154 @@ def find_best_answer(user_question):
             "automation, or chatbots.",
             best_score
         )
-        
 
-    # Return matching answer
     return faqs[best_index]["answer"], best_score
 
 
-#creat UI
-import gradio as gr
+# CHAT FUNCTION
 
 def chat_with_bot(message, history):
-    """
-    Receives the user's message and previous conversation.
-    Returns the chatbot's response.
-    """
+    """Process the user's message and return the chatbot response."""
 
-    if not message.strip():
-        return "Please enter a question."
+    if not message or not message.strip():
+        return history
 
     answer, score = find_best_answer(message)
 
-    return answer
+    # Show confidence score in the response
+    response = (
+        f"{answer}\n\n"
+        f"**Similarity score:** {score:.3f}"
+    )
+
+    history = history + [
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": response}
+    ]
+
+    return history
 
 
-with gr.Blocks(title="AI FAQ Chatbot") as demo:
+# ---------------------------------------------------------
+# GRADIO INTERFACE
+# ---------------------------------------------------------
+
+css = """
+.gradio-container {
+    max-width: 900px !important;
+    margin: auto !important;
+}
+"""
+
+with gr.Blocks(
+    title="AI FAQ Chatbot",
+    css=css
+) as demo:
 
     gr.Markdown(
         """
         # 🤖 AI FAQ Chatbot
 
-        Welcome! Ask me questions about:
+        ### AI & Automation Knowledge Assistant
 
-        **Artificial Intelligence • Machine Learning • NLP • n8n • APIs • Chatbots • Automation**
+        Ask questions about:
+
+        **Artificial Intelligence • Machine Learning • NLP • n8n • APIs • Automation • Chatbots**
         """
     )
 
     chatbot = gr.Chatbot(
         label="Conversation",
-        height=450
-    )
-
-    msg = gr.Textbox(
-        label="Your Question",
-        placeholder="Example: What is AI automation?",
-        lines=2
+        type="messages",
+        height=500
     )
 
     with gr.Row():
-        ask_button = gr.Button("Ask", variant="primary")
-        clear_button = gr.Button("Clear")
 
-    gr.Markdown("### Example Questions")
+        message = gr.Textbox(
+            label="Your Question",
+            placeholder="Example: What is AI automation?",
+            lines=2,
+            scale=4
+        )
+
+        ask_button = gr.Button(
+            "Ask",
+            variant="primary",
+            scale=1
+        )
+
+    clear_button = gr.Button("Clear Conversation")
+
+    gr.Markdown("### 💡 Try an example")
 
     gr.Examples(
         examples=[
-            ["What is artificial intelligence?"],
-            ["What is AI automation?"],
-            ["What is n8n?"],
-            ["What is an AI agent?"],
-            ["What is NLP?"],
-            ["What is cosine similarity?"],
-            ["How does this FAQ chatbot work?"],
-            ["What is an API?"]
+            "What is artificial intelligence?",
+            "What is AI automation?",
+            "What is n8n?",
+            "What is an AI agent?",
+            "What is NLP?",
+            "What is machine learning?",
+            "What is cosine similarity?",
+            "How does this FAQ chatbot work?",
+            "What is an API?",
+            "What is Gradio?"
         ],
-        inputs=msg
+        inputs=message
     )
 
-    def respond(message, history):
+    gr.Markdown(
+        """
+        ---
+        ### 🧠 How this chatbot works
 
-        if not message.strip():
-            return "", history
-
-        answer, score = find_best_answer(message)
-
-        history = history + [
-            {"role": "user", "content": message},
-            {
-                "role": "assistant",
-                "content": answer
-            }
-        ]
-
-        return "", history
-
-    msg.submit(
-        respond,
-        inputs=[msg, chatbot],
-        outputs=[msg, chatbot]
+        **User Question**
+        ↓  
+        **NLP Preprocessing**
+        ↓  
+        **TF-IDF Vectorization**
+        ↓  
+        **Cosine Similarity**
+        ↓  
+        **Best FAQ Match**
+        ↓  
+        **Confidence Check**
+        ↓  
+        **Answer**
+        """
     )
 
+    # Send message when Ask is clicked
     ask_button.click(
-        respond,
-        inputs=[msg, chatbot],
-        outputs=[msg, chatbot]
+        chat_with_bot,
+        inputs=[message, chatbot],
+        outputs=[chatbot]
+    ).then(
+        lambda: "",
+        outputs=[message]
     )
 
+    # Send message when Enter is pressed
+    message.submit(
+        chat_with_bot,
+        inputs=[message, chatbot],
+        outputs=[chatbot]
+    ).then(
+        lambda: "",
+        outputs=[message]
+    )
+
+    # Clear conversation
     clear_button.click(
-        lambda: ([], ""),
-        outputs=[chatbot, msg]
+        lambda: [],
+        outputs=[chatbot]
     )
 
 
-demo.launch(share=True)
+# ---------------------------------------------------------
+# RUN APPLICATION
+# ---------------------------------------------------------
+
+if __name__ == "__main__":
+    demo.launch()
