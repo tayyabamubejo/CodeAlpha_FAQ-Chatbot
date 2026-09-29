@@ -208,7 +208,105 @@ def find_best_answer(user_question):
             "automation, or chatbots.",
             best_score
         )
+        
 
     # Return matching answer
     return faqs[best_index]["answer"], best_score
-  
+
+
+#creat UI
+import gradio as gr
+
+def chat_with_bot(message, history):
+    """
+    Receives the user's message and previous conversation.
+    Returns the chatbot's response.
+    """
+
+    if not message.strip():
+        return "Please enter a question."
+
+    answer, score = find_best_answer(message)
+
+    return answer
+
+
+with gr.Blocks(title="AI FAQ Chatbot") as demo:
+
+    gr.Markdown(
+        """
+        # 🤖 AI FAQ Chatbot
+
+        Welcome! Ask me questions about:
+
+        **Artificial Intelligence • Machine Learning • NLP • n8n • APIs • Chatbots • Automation**
+        """
+    )
+
+    chatbot = gr.Chatbot(
+        label="Conversation",
+        height=450
+    )
+
+    msg = gr.Textbox(
+        label="Your Question",
+        placeholder="Example: What is AI automation?",
+        lines=2
+    )
+
+    with gr.Row():
+        ask_button = gr.Button("Ask", variant="primary")
+        clear_button = gr.Button("Clear")
+
+    gr.Markdown("### Example Questions")
+
+    gr.Examples(
+        examples=[
+            ["What is artificial intelligence?"],
+            ["What is AI automation?"],
+            ["What is n8n?"],
+            ["What is an AI agent?"],
+            ["What is NLP?"],
+            ["What is cosine similarity?"],
+            ["How does this FAQ chatbot work?"],
+            ["What is an API?"]
+        ],
+        inputs=msg
+    )
+
+    def respond(message, history):
+
+        if not message.strip():
+            return "", history
+
+        answer, score = find_best_answer(message)
+
+        history = history + [
+            {"role": "user", "content": message},
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        ]
+
+        return "", history
+
+    msg.submit(
+        respond,
+        inputs=[msg, chatbot],
+        outputs=[msg, chatbot]
+    )
+
+    ask_button.click(
+        respond,
+        inputs=[msg, chatbot],
+        outputs=[msg, chatbot]
+    )
+
+    clear_button.click(
+        lambda: ([], ""),
+        outputs=[chatbot, msg]
+    )
+
+
+demo.launch(share=True)
